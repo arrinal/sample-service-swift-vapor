@@ -2,6 +2,7 @@ import Vapor
 
 protocol WeatherService: Sendable {
     func getCurrentWeather(lat: Double, lon: Double) async throws -> OpenWeatherResponse
+    func getForecast(lat: Double, lon: Double) async throws -> OpenWeatherForecastResponse
 }
 
 struct OpenWeatherService: WeatherService {
@@ -39,5 +40,33 @@ struct OpenWeatherService: WeatherService {
         }
         
         return try response.content.decode(OpenWeatherResponse.self)
+    }
+    
+    func getForecast(lat: Double, lon: Double) async throws -> OpenWeatherForecastResponse {
+        guard var components = URLComponents(string: "https://api.openweathermap.org/data/2.5/forecast") else {
+            throw Abort(.internalServerError, reason: "Invalid URL")
+        }
+        
+        components.queryItems = [
+            URLQueryItem(name: "lat", value: String(lat)),
+            URLQueryItem(name: "lon", value: String(lon)),
+            URLQueryItem(name: "appid", value: apiKey),
+            URLQueryItem(name: "units", value: "metric")
+        ]
+        
+        guard let url = components.url?.absoluteString else {
+            throw Abort(.internalServerError, reason: "Invalid URL")
+        }
+        
+        let response = try await client.get(URI(string: url))
+        
+        guard response.status == HTTPStatus.ok else {
+            if response.status == HTTPStatus.notFound {
+                throw Abort(.notFound, reason: "Location not found")
+            }
+            throw Abort(.internalServerError, reason: "Failed to fetch forecast data")
+        }
+        
+        return try response.content.decode(OpenWeatherForecastResponse.self)
     }
 }
