@@ -1,7 +1,7 @@
 import Vapor
 
 protocol WeatherService: Sendable {
-    func getCurrentWeather(lat: Double, lon: Double) async throws -> Weather
+    func getCurrentWeather(lat: Double, lon: Double) async throws -> OpenWeatherResponse
 }
 
 struct OpenWeatherService: WeatherService {
@@ -13,7 +13,7 @@ struct OpenWeatherService: WeatherService {
         self.client = client
     }
     
-    func getCurrentWeather(lat: Double, lon: Double) async throws -> Weather {
+    func getCurrentWeather(lat: Double, lon: Double) async throws -> OpenWeatherResponse {
         guard var components = URLComponents(string: "https://api.openweathermap.org/data/2.5/weather") else {
             throw Abort(.internalServerError, reason: "Invalid URL")
         }
@@ -38,7 +38,6 @@ struct OpenWeatherService: WeatherService {
             throw Abort(.internalServerError, reason: "Failed to fetch weather data")
         }
         
-        let weatherResponse = try response.content.decode(OpenWeatherResponse.self)
-        return weatherResponse.toWeather()
+        return try response.content.decode(OpenWeatherResponse.self)
     }
 }

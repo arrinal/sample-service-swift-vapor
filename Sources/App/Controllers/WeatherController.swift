@@ -9,12 +9,12 @@ struct WeatherController: RouteCollection, Sendable {
     
     func boot(routes: RoutesBuilder) throws {
         let weather = routes.grouped("api", "v1", "weather")
-        weather.get("current-weather") { [self] req async throws -> APIResponse<Weather> in
+        weather.get("current-weather") { [self] req async throws -> APIResponse<OpenWeatherResponse> in
             try await self.getCurrentWeather(req)
         }
     }
     
-    func getCurrentWeather(_ req: Request) async throws -> APIResponse<Weather> {
+    func getCurrentWeather(_ req: Request) async throws -> APIResponse<OpenWeatherResponse> {
         guard let lat = req.query[Double.self, at: "lat"],
               let lon = req.query[Double.self, at: "lon"] else {
             throw Abort(.badRequest, reason: "Latitude and longitude are required")
