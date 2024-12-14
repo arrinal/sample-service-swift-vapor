@@ -3,6 +3,7 @@ import Vapor
 protocol WeatherService: Sendable {
     func getCurrentWeather(lat: Double, lon: Double) async throws -> OpenWeatherResponse
     func getForecast(lat: Double, lon: Double) async throws -> OpenWeatherForecastResponse
+    func searchCities(query: String, limit: Int) async throws -> [GeocodingResponse]
 }
 
 struct OpenWeatherService: WeatherService {
@@ -68,5 +69,32 @@ struct OpenWeatherService: WeatherService {
         }
         
         return try response.content.decode(OpenWeatherForecastResponse.self)
+    }
+    
+    func searchCities(query: String, limit: Int) async throws -> [GeocodingResponse] {
+        guard var components = URLComponents(string: "https://api.openweathermap.org/geo/1.0/direct") else {
+            throw Abort(.internalServerError, reason: "Invalid URL")
+        }
+        
+        components.queryItems = [
+            URLQueryItem(name: "q", value: query),
+            URLQueryItem(name: "limit", value: String(limit)),
+            URLQueryItem(name: "appid", value: apiKey)
+        ]
+        
+        guard let url = components.url?.absoluteString else {
+            throw Abort(.internalServerError, reason: "Invalid URL")
+        }
+        
+        let response = try await client.get(URI(string: url))
+        
+        guard response.status == HTTPStatus.ok else {
+            if response.status == HTTPStatus.notFound {
+                throw Abort(.notFound, reason: "Cities not found")
+            }
+            throw Abort(.internalServerError, reason: "Failed to fetch cities data")
+        }
+        
+        return try response.content.decode([GeocodingResponse].self)
     }
 }
