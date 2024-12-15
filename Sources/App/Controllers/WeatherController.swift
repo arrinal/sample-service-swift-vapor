@@ -15,7 +15,7 @@ struct WeatherController: RouteCollection, Sendable {
         weather.get("current-forecast") { [self] req async throws -> APIResponse<OpenWeatherForecastResponse> in
             try await self.getForecast(req)
         }
-        weather.get("search-city") { [self] req async throws -> APIResponse<[GeocodingResponse]> in
+        weather.get("search-cities") { [self] req async throws -> APIResponse<[GeocodingResponse]> in
             try await self.searchCities(req)
         }
     }
@@ -70,7 +70,7 @@ struct WeatherController: RouteCollection, Sendable {
             let cities = try await weatherService.searchCities(query: query, limit: limit)
             return APIResponse.success(
                 cities,
-                path: "/api/v1/openweathermap.org/search-city",
+                path: "/api/v1/openweathermap.org/search-cities",
                 message: "Cities data retrieved successfully"
             )
         } catch let error as AbortError {
