@@ -10,7 +10,7 @@ struct OpenWeatherForecastResponse: Codable {
         let weather: [WeatherDescription]
         let clouds: Clouds
         let wind: Wind
-        let visibility: Int
+        let visibility: Int?
         let pop: Double
         let rain: Rain?
         let sys: Sys
